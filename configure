@@ -1,5 +1,28 @@
 #!/usr/bin/bash
 
-set -x
+set -xeuo pipefail
 
-touch /tmp/HELLO-WORLD
+# prereq - install ntp
+yum -y install ntp
+systemctl enable --now ntpd
+
+# prereq enable transparent hugepages
+echo always > /sys/kernel/mm/transparent_hugepage/enabled
+
+# prereq ulimit open fds
+ulimit -n 1048576
+
+# make /opt
+mkdir -p /opt
+pushd /opt
+
+# download, unpack archive
+wget https://downloads.yugabyte.com/releases/2.15.0.1/yugabyte-2.15.0.1-b4-linux-x86_64.tar.gz
+tar -xvfz yugabyte-2.15.0.1-b4-linux-x86_64.tar.gz
+
+# post-install
+cd yugabyte-2.15.0.1/
+./bin/post_install.sh
+
+# start
+./bin/yugabyted start
